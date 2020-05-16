@@ -3,11 +3,13 @@ A JACK client that provides rudimentary volume and balance control via MIDI cont
 
 ## Usage
 jack-balancer listens for the following command line arguments:
-    -h             -  Show help
-    -v [level]     -  Set verbosity level (0: default, 1: verbose, 2: debug)
-    -c [channel]   -  Set MIDI channel (default: 0)
-    -vc [control]  -  Set control for volume (default: 7)
-    -bc [control]  -  Set control for balance (default: 8)
+```
+-h             -  Show help
+-v [level]     -  Set verbosity level (0: default, 1: verbose, 2: debug)
+-c [channel]   -  Set MIDI channel (default: 0)
+-vc [control]  -  Set control for volume (default: 7)
+-bc [control]  -  Set control for balance (default: 8)
+```
 
 ## Building
 I have not figured out how to use MAKEFILEs and/or PKGBUILDs yet, so for now this project has to be compiled manually.

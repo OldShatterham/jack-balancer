@@ -12,14 +12,19 @@ jack-balancer listens for the following command line arguments:
 ```
 
 ## Building
-I have not figured out how to use MAKEFILEs and/or PKGBUILDs yet, so for now this project has to be compiled manually.
 Requirements: A functional JACK installation, or at least `jack.h`
-### Building with GCC:
+### Using the Makefile:
+This project includes a makefile that automates the building and installation process.
+```
+make
+sudo make install
+```
+By default, `jack-balancer` will be installed into `/usr/local/bin`, this can changed by setting `$PREFIX` to the desired directory when using `make install`.
+### Building with GCC (standalone):
     g++ -Wall -o bin/jack-balancer jack-balancer.cpp -l jack
 So far I have only used this application on Arch Linux with jack2, I probably cannot help you if something doesn't work on your machine. Sorry.
 
 ## TODO
-- Provide PKGBUILD
 - Be more verbose about connections etc.
 - Fix 'Unique name assigned' output
 - Format 'verbose' output better (i.e. always show the same amount of digits for floats)

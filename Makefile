@@ -15,7 +15,7 @@ jack-balancer: jack-balancer.cpp
 
 .PHONY: clean
 clean:
-	$(RM) $(ODIR)/jack-balancer
+	$(RM) $(ODIR)/$(ONAME)
 
 .PHONY: install
 install:

@@ -9,7 +9,7 @@ jack-balancer listens for the following command line arguments:
 -c [channel]   -  Set MIDI channel (default: 0)
 -vc [control]  -  Set control for volume (default: 7)
 -bc [control]  -  Set control for balance (default: 8)
--g [factor]    -  Set gain factor, i.e. 0.1 for 90 & attenuation (default: 1.0)
+-g [factor]    -  Set gain factor, i.e. 0.1 for 90 % attenuation (default: 1.0)
 ```
 
 ## Building

@@ -154,7 +154,7 @@ int main (int argc, char *argv[]) {
 			std::cout << "  -c [channel]   -  Set MIDI channel (default: 0)" << std::endl;
 			std::cout << "  -vc [control]  -  Set control for volume (default: 7)" << std::endl;
 			std::cout << "  -bc [control]  -  Set control for balance (default: 8)" << std::endl;
-			std::cout << "  -g [factor]    -  Set gain factor, i.e. 0.1 for 90 & attenuation (default: 1.0)" << std::endl;
+			std::cout << "  -g [factor]    -  Set gain factor, i.e. 0.1 for 90 % attenuation (default: 1.0)" << std::endl;
 			exit(0);
 		} else if (arg == "-v") {
 			assignTarget = &VERBLEVEL;

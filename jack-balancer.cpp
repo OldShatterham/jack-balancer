@@ -33,9 +33,10 @@ unsigned short VERBLEVEL = 0;	//0: default, 1: verbose, 2: debug
 unsigned short CHANNEL = 0;
 unsigned short VOLCONTROL = 7;
 unsigned short BALCONTROL = 8;
+double GAIN = 1.0;				// Default input amplification/attenuation
 
-double volFactor = 0.1;		// Default output amplification/attenuation
-
+double factorL = -1.0;			// Initiated as -1.0 so first time execution of process() can be detected
+double factorR = -1.0;
 
 
 jack_port_t *output_port1, *output_port2;
@@ -104,12 +105,14 @@ int process (jack_nframes_t nframes, void *arg) {
 	}
 
 	// Handle audio
-	double factorL = volumeFcts[volumeStep] * balanceFctsL[balanceStep] * volFactor;
-	double factorR = volumeFcts[volumeStep] * balanceFctsR[balanceStep] * volFactor;
-	if (VERBLEVEL >= 1 && controlChange) {
-		std::cout << "Vol: " << volumeStep;
-		std::cout << ", PanStep: " << balanceStep;
-		std::cout << " => " << factorL << "/" << factorR << std::endl;
+	if (controlChange || factorL == -1.0) {
+		factorL = volumeFcts[volumeStep] * balanceFctsL[balanceStep] * GAIN;
+		factorR = volumeFcts[volumeStep] * balanceFctsR[balanceStep] * GAIN;
+		if (VERBLEVEL >= 1) {
+			std::cout << "Vol: " << volumeStep;
+			std::cout << ", PanStep: " << balanceStep;
+			std::cout << " => " << factorL << "/" << factorR << std::endl;
+		}
 	}
 
 
@@ -140,7 +143,8 @@ int main (int argc, char *argv[]) {
 	//Read in values from command line:
 	for (int a = 1; a < argc; a++) {
 		std::string arg = argv[a];
-		unsigned short *assignTarget = nullptr;
+		//auto *assignTarget = nullptr;
+		void *assignTarget;
 		std::string targetName;
 		if (arg == "-h" || arg == "--help" || arg == "-help") {
 			std::cout << "Control balance and volume of two JACK channels." << std::endl;
@@ -150,6 +154,7 @@ int main (int argc, char *argv[]) {
 			std::cout << "  -c [channel]   -  Set MIDI channel (default: 0)" << std::endl;
 			std::cout << "  -vc [control]  -  Set control for volume (default: 7)" << std::endl;
 			std::cout << "  -bc [control]  -  Set control for balance (default: 8)" << std::endl;
+			std::cout << "  -g [factor]    -  Set gain factor, i.e. 0.1 for 90 & attenuation (default: 1.0)" << std::endl;
 			exit(0);
 		} else if (arg == "-v") {
 			assignTarget = &VERBLEVEL;
@@ -163,19 +168,44 @@ int main (int argc, char *argv[]) {
 		} else if (arg == "-bc") {
 			assignTarget = &BALCONTROL;
 			targetName = "balance control";
+		} else if (arg == "-g") {
+			assignTarget = &GAIN;
+			targetName = "gain";
 		} else {
 			std::cerr << "Unknown argument '" + arg + "'!" << std::endl;
+			assignTarget = nullptr;
 			exit(1);
 		}
 		
 		if (assignTarget != nullptr) {
 			if (a < (argc-1)) {
-				std::string value = argv[++a];
+				char* value = argv[++a];
 				if (VERBLEVEL == 2)
 					std::cout << "Parsing argument " << a << " which is " << value << std::endl;
 				try {
-					*assignTarget = std::stoi(value);
-					std::cout << "Set " << targetName << " to " << *assignTarget << std::endl;
+					if(assignTarget == &GAIN) {
+						//Cast *char to double:
+						double *castAssignTarget = static_cast<double*>(assignTarget);
+						double castResult = std::stod(value);
+						if(castResult >= 0.0) {
+							*castAssignTarget = castResult;
+							std::cout << "Set " << targetName << " to " << *castAssignTarget << std::endl;
+						} else {
+							std::cerr << "'" << value << "' is not a valid value for " << targetName << "!" << std::endl;
+							exit(1);
+						}
+					} else {
+						//Cast *char to int:
+						unsigned short *castAssignTarget = static_cast<unsigned short*>(assignTarget);
+						short castResult = std::stoi(value);
+						if(castResult >= 0) {	//NOTE: Channel values > 15 or Controller numbers > 127 are invalid but will not be detected with this. Oh well...
+							*castAssignTarget = static_cast<unsigned short>(castResult);
+							std::cout << "Set " << targetName << " to " << *castAssignTarget << std::endl;
+						} else {
+							std::cerr << "'" << value << "' is not a valid value for " << targetName << "!" << std::endl;
+							exit(1);
+						}
+					}
 				} catch (...) {
 					std::cerr << "Error while assigning value '" << value << "'!" << std::endl;
 					exit(1);
@@ -234,8 +264,8 @@ int main (int argc, char *argv[]) {
 	if(VERBLEVEL >= 1)
 		std::cout << "Calculated values of balance function." << std::endl;
 	
-	if(VERBLEVEL >= 1 && volFactor != 1.0)
-		std::cout << "Default output amplification/attenuation: " << volFactor << std::endl;
+	if(VERBLEVEL >= 1 && GAIN != 1.0)
+		std::cout << "Gain: " << GAIN << std::endl;
 
 
 	// Announce ourselves as a new JACK client

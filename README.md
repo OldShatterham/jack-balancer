@@ -9,6 +9,7 @@ jack-balancer listens for the following command line arguments:
 -c [channel]   -  Set MIDI channel (default: 0)
 -vc [control]  -  Set control for volume (default: 7)
 -bc [control]  -  Set control for balance (default: 8)
+-n [name]      -  Set JACK client name; max. 63 characters (default: 'jack-balancer')
 -g [factor]    -  Set gain factor, i.e. 0.1 for 90 % attenuation (default: 1.0)
 ```
 
@@ -27,7 +28,6 @@ So far I have only used this application on Arch Linux with jack2, I probably ca
 
 ## TODO
 - Be more verbose about connections etc.
-- Fix 'Unique name assigned' output
 - Format 'verbose' output better (i.e. always show the same amount of digits for floats)
 - MIDI configuration
   - Properly cast input arguments to ints (also support hexadecimal values)

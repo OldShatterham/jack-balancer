@@ -5,7 +5,6 @@
  * 
  * TODO:
  * - Be more verbose about connections etc.
- * - Fix 'Unique name assigned' output
  * - Format 'verbose' output better (i.e. always show the same amount of digits for floats)
  * - MIDI configuration
  *   - Properly cast input arguments to ints (also support hexadecimal values)
@@ -34,6 +33,7 @@ unsigned short CHANNEL = 0;
 unsigned short VOLCONTROL = 7;
 unsigned short BALCONTROL = 8;
 double GAIN = 1.0;				// Default input amplification/attenuation
+char* CLIENTNAME = (char*)malloc(64*sizeof(char));	//JACK client names can at most be 63 characters long
 
 double factorL = -1.0;			// Initiated as -1.0 so first time execution of process() can be detected
 double factorR = -1.0;
@@ -140,6 +140,9 @@ void jack_shutdown (void *arg) {
  */
 
 int main (int argc, char *argv[]) {
+	CLIENTNAME[63] = 0x0;
+	memccpy(CLIENTNAME, "jack-balancer", 0, 64);
+
 	//Read in values from command line:
 	for (int a = 1; a < argc; a++) {
 		std::string arg = argv[a];
@@ -154,6 +157,7 @@ int main (int argc, char *argv[]) {
 			std::cout << "  -c [channel]   -  Set MIDI channel (default: 0)" << std::endl;
 			std::cout << "  -vc [control]  -  Set control for volume (default: 7)" << std::endl;
 			std::cout << "  -bc [control]  -  Set control for balance (default: 8)" << std::endl;
+			std::cout << "  -n [name]      -  Set JACK client name; max. 63 characters (default: 'jack-balancer')" << std::endl;
 			std::cout << "  -g [factor]    -  Set gain factor, i.e. 0.1 for 90 % attenuation (default: 1.0)" << std::endl;
 			exit(0);
 		} else if (arg == "-v") {
@@ -168,6 +172,9 @@ int main (int argc, char *argv[]) {
 		} else if (arg == "-bc") {
 			assignTarget = &BALCONTROL;
 			targetName = "balance control";
+		} else if (arg == "-n") {
+			assignTarget = &CLIENTNAME;
+			targetName = "client name";
 		} else if (arg == "-g") {
 			assignTarget = &GAIN;
 			targetName = "gain";
@@ -194,6 +201,11 @@ int main (int argc, char *argv[]) {
 							std::cerr << "'" << value << "' is not a valid value for " << targetName << "!" << std::endl;
 							exit(1);
 						}
+					} else if (assignTarget == &CLIENTNAME) {
+						//Copy *char to *char:
+						char* *castAssignTarget = static_cast<char**>(assignTarget);
+						memccpy(*castAssignTarget, value, 0, 63);
+						std::cout << "Set " << targetName << " to '" << *castAssignTarget << "'" << std::endl;
 					} else {
 						//Cast *char to int:
 						unsigned short *castAssignTarget = static_cast<unsigned short*>(assignTarget);
@@ -269,11 +281,10 @@ int main (int argc, char *argv[]) {
 
 
 	// Announce ourselves as a new JACK client
-	const char *client_name = "jack-balancer";
 	const char *server_name = NULL;
 	jack_options_t options = JackNullOption;
 	jack_status_t status;
-	client = jack_client_open (client_name, options, &status, server_name);
+	client = jack_client_open (CLIENTNAME, options, &status, server_name);
 	if (client == NULL) {
 		fprintf (stderr, "jack_client_open() failed, status = 0x%2.0x\n", status);
 		if (status & JackServerFailed) {
@@ -285,8 +296,9 @@ int main (int argc, char *argv[]) {
 		std::cout << "JACK server started." << std::endl;
 	}
 	if (status & JackNameNotUnique) {
-		client_name = jack_get_client_name(client);
-		std::cerr << "unique name '" << *client_name << "' assigned!" << std::endl;
+		const char* clientNameNew = jack_get_client_name(client);
+		memccpy(CLIENTNAME, clientNameNew, 0, 63);
+		std::cerr << "unique name '" << CLIENTNAME << "' assigned!" << std::endl;
 	}
 
 	// Define JACK interface functions
